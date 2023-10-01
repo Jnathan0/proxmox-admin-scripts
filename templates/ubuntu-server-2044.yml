@@ -1,0 +1,30 @@
+- name: create VM template based on ubuntu server 20.44
+  hosts: all
+
+  tasks:
+    - include_vars: ubuntu-server-2044-vars.yml
+    - name: create /tmp/cloud-init-images if not exist
+      ansible.builtin.file:
+        path: /tmp/cloud-init-images
+        state: directory
+        owner: root
+        group: root
+    - name: download .img file from remote
+      ansible.builtin.get_url:
+        url: https://cloud-images.ubuntu.com/jammy/20230929/jammy-server-cloudimg-amd64-disk-kvm.img
+        dest: /tmp/cloud-init-images
+        checksum: sha256:bbdc9f6060f2b9a8865a2c07fe4078c86ed0cecccaf1f0bf6a250fb6d3f855d7
+    - name: create base template
+      ansible.builtin.shell: |
+        qm create "{{ TEMPLATE_ID }}" --name "{{ TEMPLATE_NAME }}" --memory "{{ TEMPLATE_MEMORY_BASE }}" --net0 "{{ TEMPLATE_NET_OPTIONS }}"
+        qm importdisk "{{ TEMPLATE_ID }}" /tmp/cloud-init-images/jammy-server-cloudimg-amd64-disk-kvm.img local-lvm
+        qm set "{{ TEMPLATE_ID }}" --scsihw "{{ TEMPLATE_SCSIHW }}" --scsi0 local-lvm:vm-"{{ TEMPLATE_ID }}"-disk-0
+        qm set "{{ TEMPLATE_ID }}" --ide2 "{{ TEMPLATE_IDE2 }}" --size 
+        qm set "{{ TEMPLATE_ID }}" --serial0 "{{ TEMPLATE_SERIAL0 }}" -vga "{{ TEMPLATE_VGA }}"
+        qm set "{{ TEMPLATE_ID }}" --efidisk0 "{{ TEMPLATE_EFIDISK0 }}"
+        qm set "{{ TEMPLATE_ID }}" --boot "{{ TEMPLATE_BOOT_ORDER }}"
+        qm template "{{ TEMPLATE_ID }}"
+    - name: cleanup /tmp/cloud-init-images
+      ansible.builtin.file:
+        path: /tmp/cloud-init-images
+        state: absent

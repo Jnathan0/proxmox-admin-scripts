@@ -1,0 +1,10 @@
+TEMPLATE_ID: 9000
+TEMPLATE_NAME: ubuntu-server-2204-cloudinit-template
+TEMPLATE_MEMORY_BASE: 2048
+TEMPLATE_NET_OPTIONS: 'virtio,bridge=vmbr0'
+TEMPLATE_SCSIHW: virtio-scsi-pci
+TEMPLATE_IDE2: 'local-lvm:cloudinit'
+TEMPLATE_SERIAL0: socket
+TEMPLATE_VGA: serial0
+TEMPLATE_EFIDISK0: 'local-lvm:0'
+TEMPLATE_BOOT_ORDER: 'order=scsi0'

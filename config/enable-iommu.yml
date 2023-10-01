@@ -1,0 +1,22 @@
+- name: enable iommu on system config
+  hosts: all
+
+  tasks:
+  - name: Set iommu in GRUB config
+    ansible.builtin.shell: |
+      set -x
+      # Forgive me lord for these god awful one-liners
+      if [ ! -z "$(grep -m 1 'vendor_id' /proc/cpuinfo | awk '{print tolower($0)}' | grep "intel")" ] ; then sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\\\"quiet intel_iommu=on\\\"/" /etc/default/grub ; fi
+      if [ ! -z "$(grep -m 1 'vendor_id' /proc/cpuinfo | awk '{print tolower($0)}' | grep "amd")" ] ; then sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\\\"quiet amd_iommu=on\\\"/" /etc/default/grub ; fi
+  - name: Set vfio in /etc/modules and /etc/modprobe.d
+    ansible.builtin.shell: |
+      set -x
+      echo -e "vfio\nvfio_iommu_type1\nvfio_pci\nvfio_virqfd" >> /etc/modules
+      echo "options vfio_iommu_type1 allow_unsafe_interrupts=1" > /etc/modprobe.d/iommu_unsafe_interrupts.conf
+  - name: Set kvm options for windows specific vms
+    ansible.builtin.shell: |
+      set -x
+      # added so windows doesnt crash
+      echo "options kvm ignore_msrs=1" > /etc/modprobe.d/kvm.conf
+
+      
